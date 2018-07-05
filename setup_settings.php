@@ -1,4 +1,5 @@
 <?php
+include_once("curler.php");
 /**
  * Created by PhpStorm.
  * Author: popstarfreas (https://dark-gaming.com/profile/popstarfreas)
@@ -32,7 +33,7 @@ function handle_form($post, $ctx)
 
     $location = "$ip:$port";
     // Test Connection
-    $response = json_decode(file_get_contents("http://$location/v2/token/create?username=$rest_user&password=$rest_pass", 0, $ctx));
+    $response = json_decode(readUrl("http://$location/v2/token/create?username=$rest_user&password=$rest_pass"));
 
     if (empty($response)) {
         $errors[] = "Failed to connect to $location";

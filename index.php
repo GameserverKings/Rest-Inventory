@@ -1,4 +1,6 @@
 <?php
+include_once("curler.php");
+
 /**
  * Created by PhpStorm.
  * Author: popstarfreas (https://dark-gaming.com/profile/popstarfreas)
@@ -70,7 +72,7 @@ $location = "$ip:$port";
 // Gets new token and caches
 function getNewToken($rest_user, $rest_pass, $location, $ctx) {
     $token = null;
-    $response = json_decode(@file_get_contents("http://$location/v2/token/create?username=".urlencode($rest_user)."&password=".urlencode($rest_pass), 0, $ctx));
+    $response = json_decode(readUrl(("http://$location/v2/token/create?username=".urlencode($rest_user)."&password=".urlencode($rest_pass))));
     if (isset($response->token)) {
         $token = $response->token;
         file_put_contents('token', $token);
@@ -91,38 +93,42 @@ if (strlen($token) === 0) {
 
 // If no player is specified, list players online
 if (!isset($_GET['player'])) {
-    $response = json_decode(@file_get_contents("http://$location/v2/players/list?token=" . $token), true);
-    
+
+
+    $s = readUrl("http://$location/v2/players/list?token=" . $token);
+    $response = json_decode($s, true);
+
     // If this token is now unusable, get a new one
     if ($response['status'] === "403") {
         $token = getNewToken($rest_user, $rest_pass, $location, $ctx);
-        $response = json_decode(@file_get_contents("http://$location/v2/players/list?token=" . $token), true);
+        $response = json_decode(readUrl("http://$location/v2/players/list?token=" . $token), true);
     }
 
     $player['list'] = $response;
-    $status = json_decode(@file_get_contents("http://$location/v2/server/status?token=" . $token), true);
+    $status = json_decode(readUrl("http://$location/v2/server/status?token=" . $token), true);
     $player['count'] = $status['playercount'];
+
+    //echo $status;
 
     if (!empty($player['list']))
         include_once 'display_users.php';
     else
         echo 'Unable to display user list';
-        
+
     exit;
 }
 
 // Remove spaces
 $player['GET'] = str_replace(' ', '%20', $_GET['player']);
 $player['GET'] = str_replace('#', '%23', $player['GET']);
-
 // Grab a token
 // Run the command
-$response = json_decode(@file_get_contents("http://$location/v3/players/read?token=" . $token . '&player=' . $player['GET']), true);
+$response = json_decode(readUrl("http://$location/v3/players/read?token=" . $token . '&player=' . $player['GET']), true);
 
 // If this token is now unusable, get a new one
 if ($response['status'] === "403") {
     $token = getNewToken($rest_user, $rest_pass, $location, $ctx);
-    $response = json_decode(@file_get_contents("http://$location/v3/players/read?token=" . $token . '&player=' . $player['GET']), true);
+    $response = json_decode(readUrl("http://$location/v3/players/read?token=" . $token . '&player=' . $player['GET']), true);
 }
 
 $player['info'] = $response;
